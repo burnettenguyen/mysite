@@ -1,0 +1,37 @@
+{% load wagtailcore_tags %}
+{% load wagtailimages_tags %}
+
+{% block content %}
+    <div class="container" style="padding: 20px 15px 5px 15px;">
+        {% if self.title %}
+            <h2 class="text-center">{{ self.title }}</h2>
+        {% endif %}
+        <div class="card-deck">
+            {% for card in self.cards %}
+                {% image card.image fill-300x200 as img %}
+
+                <div class="card" style="width: 18em;">
+
+                    <img src="{{ img.url }}" alt="{{ img.alt }}" class="card-img-top"/>
+
+                    <div class="card-body">
+
+                        <h5 class="card-title">{{ card.title }}</h5>
+
+                        <p class="card-text">{{ card.text }}</p>
+                        {% if card.button_page %}
+                            <a href="{{ card.button_page.url }}" class="btn btn-primary" target="_blank">
+                                {{ card.button_cta }}
+                            </a>
+                        {% elif card.button_url %}
+                            <a href="{{ card.button_url }}" class="btn btn-primary" target="_blank">
+                                {{ card.button_cta }}
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}
