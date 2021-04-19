@@ -17,7 +17,7 @@ urlpatterns = [
 
     path('search/', search_views.search, name='search'),
 
-    path(r'^sitemap.xml$', sitemap),
+    path('sitemap.xml', sitemap),
 
 ]
 
