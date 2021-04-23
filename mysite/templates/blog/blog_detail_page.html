@@ -39,6 +39,17 @@
 
     </div>
 
+    <div class="d-flex justify-content-center">
+        <h6 class="text-center">Categories:</h6>
+            <h6><ul style="list-style: none;">
+                {% for cat in self.categories.all %}
+                    <li>
+                        <a href="{{ self.get_parent.url }}?category={{ cat.slug }}">{{ cat.name }}</a>
+                    </li>
+                {% endfor %}
+            </ul></h6>
+    </div>
+
     <div class="container">
         <div class="row">
             <div class="col-lg-8 offset-lg-2">

@@ -2,8 +2,9 @@
 
 from django.db import models
 from django.shortcuts import render
+from django import forms
 
-from modelcluster.fields import ParentalKey
+from modelcluster.fields import ParentalKey, ParentalManyToManyField
 
 from wagtail.core.models import Page, Orderable
 from wagtail.core.fields import StreamField
@@ -72,6 +73,32 @@ class BlogAuthor(models.Model):
         verbose_name_plural = "Blog Authors"
 
 
+@register_snippet
+class BlogCategory(models.Model):
+    """Blog category for a snippet"""
+    name = models.CharField(max_length=255)
+
+    slug = models.SlugField(
+        verbose_name="slug",
+        allow_unicode=True,
+        max_length=255,
+        help_text="A slug to identify posts by this category"
+    )
+
+    panels = [
+        FieldPanel("name"),
+        FieldPanel("slug"),
+    ]
+
+    class Meta:
+        verbose_name = "Blog Category"
+        verbose_name_plural = "Blog Categories"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
 class BlogListingPage(RoutablePageMixin, Page):
     """Listing all the Blog Detail Pages"""
 
@@ -97,7 +124,8 @@ class BlogListingPage(RoutablePageMixin, Page):
     @route(r'^latest/$', name="latest_posts")
     def latest_blog_posts_only_shows_last_5(self, request, *args, **kwargs):
         context = self.get_context(request, *args, **kwargs)
-        context["posts"] = context["posts"][:3]
+        context["posts"] = BlogDetailPage.objects.live().public()[:3]
+        context["categories"] = BlogCategory.objects.all()
         return render(request, "blog/latest_posts.html", context)
 
     def get_sitemap_urls(self, request):
@@ -132,6 +160,7 @@ class BlogDetailPage(Page):
         related_name="+",
         on_delete=models.SET_NULL,
     )
+    categories = ParentalManyToManyField("blog.BlogCategory", blank=True)
 
     content = StreamField(
         [
@@ -153,6 +182,12 @@ class BlogDetailPage(Page):
                 InlinePanel("blog_authors", label="Author", min_num=1, max_num=4)
             ],
             heading="Author(s)"
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("categories", widget=forms.CheckboxSelectMultiple)
+            ],
+            heading="Categories"
         ),
         StreamFieldPanel("content"),
     ]

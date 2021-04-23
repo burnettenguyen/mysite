@@ -3,7 +3,21 @@
 {% load wagtailimages_tags wagtailroutablepage_tags %}
 
 {% block content %}
-    <a href="{% routablepageurl page "latest_posts" %}">View Latest Posts Only</a>
+    <div class="mb-4">
+        <a href="{% routablepageurl page "latest_posts" %}">View Latest Posts Only</a>
+    </div>
+
+    <h6>
+        Categories:
+        <small>
+            {% for cat in categories %}
+                <a href="{% routablepageurl page "category_view" cat.slug %}">
+                    {{ cat.name }}
+                </a>{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+        </small>
+    </h6>
+
 
     <div class="container">
         {% for post in posts %}
