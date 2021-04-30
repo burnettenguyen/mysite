@@ -3,6 +3,7 @@
 from django.db import models
 from django.shortcuts import render
 from django import forms
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 
 from modelcluster.fields import ParentalKey, ParentalManyToManyField
 
@@ -116,16 +117,41 @@ class BlogListingPage(RoutablePageMixin, Page):
     ]
 
     def get_context(self, request, *args, **kwargs):
-        """Adding custom stuff to our context"""
+        """Adding custom stuff to our context."""
         context = super().get_context(request, *args, **kwargs)
-        context["posts"] = BlogDetailPage.objects.live().public()
+        # Get all posts
+        all_posts = BlogDetailPage.objects.live().public().order_by('-first_published_at')
+
+        if request.GET.get('tag', None):
+            tags = request.GET.get('tag')
+            all_posts = all_posts.filter(tags__slug__in=[tags])
+
+        # Paginate all posts by 1 per page
+        paginator = Paginator(all_posts, 1)
+        # Try to get the ?page=x value
+        page = request.GET.get("page")
+        try:
+            # If the page exists and the ?page=x is an int
+            posts = paginator.page(page)
+        except PageNotAnInteger:
+            # If the ?page=x is not an int; show the first page
+            posts = paginator.page(1)
+        except EmptyPage:
+            # If the ?page=x is out of range (too high most likely)
+            # Then return the last page
+            posts = paginator.page(paginator.num_pages)
+
+        # "posts" will have child pages; you'll need to use .specific in the template
+        # in order to access child properties, such as youtube_video_id and subtitle
+        context["posts"] = posts
+        context["categories"] = BlogCategory.objects.all()
         return context
+
 
     @route(r'^latest/$', name="latest_posts")
     def latest_blog_posts_only_shows_last_5(self, request, *args, **kwargs):
         context = self.get_context(request, *args, **kwargs)
         context["posts"] = BlogDetailPage.objects.live().public()[:3]
-        context["categories"] = BlogCategory.objects.all()
         return render(request, "blog/latest_posts.html", context)
 
     def get_sitemap_urls(self, request):
